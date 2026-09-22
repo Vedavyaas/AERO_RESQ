@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ef8e4652-4208-4bc2-a5b2-f6178097070a" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0000003422451265" />
+      <entry key="S60" value="1.0005850172018018" />
+      <entry key="M2" value="1.0241871288457678" />
+      <entry key="M5" value="1.225649163163645" />
+      <entry key="M10" value="1.4750254342281528" />
+      <entry key="M15" value="1.6088045773873405" />
+      <entry key="M30" value="1.7802593013782921" />
+      <entry key="H1" value="1.8833228749320898" />
+      <entry key="H2" value="1.9398525814892937" />
+      <entry key="H4" value="1.9694599432102877" />
+      <entry key="D1" value="1.9948439844307346" />
+      <entry key="W1" value="1.9992617935107249" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.006045175756024958" />
+      <entry key="MS500" value="0.3599828296286715" />
+      <entry key="S2" value="0.7745885162890197" />
+      <entry key="S5" value="0.90698684558559" />
+      <entry key="S10" value="1.014312695718237" />
+      <entry key="S30" value="1.383355856571988" />
+      <entry key="S60" value="1.625981996607406" />
+      <entry key="M2" value="1.8649343516050556" />
+      <entry key="M5" value="2.592294063443515" />
+      <entry key="M10" value="3.384246062932161" />
+      <entry key="M15" value="3.7998580500475305" />
+      <entry key="M30" value="4.327956062604818" />
+      <entry key="H1" value="4.643700199013225" />
+      <entry key="H2" value="4.816463264216624" />
+      <entry key="H4" value="4.906843074585638" />
+      <entry key="D1" value="4.984277332448272" />
+      <entry key="W1" value="4.997749043631587" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.006257692978137496" />
+      <entry key="MS500" value="0.4955852919962659" />
+      <entry key="S2" value="1.380240513032496" />
+      <entry key="S5" value="1.724486964549092" />
+      <entry key="S10" value="1.913321767953278" />
+      <entry key="S30" value="2.3386481423446224" />
+      <entry key="S60" value="2.6005595939997406" />
+      <entry key="M2" value="2.874500854351975" />
+      <entry key="M5" value="3.810542155704736" />
+      <entry key="M10" value="4.854771247718868" />
+      <entry key="M15" value="5.40538534433143" />
+      <entry key="M30" value="6.106401290676112" />
+      <entry key="H1" value="6.526063705537199" />
+      <entry key="H2" value="6.755821857991203" />
+      <entry key="H4" value="6.876052284188548" />
+      <entry key="D1" value="6.979078994068017" />
+      <entry key="W1" value="6.997004777759418" />
+    </decayedShown>
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 3
+}]]></component>
+  <component name="ProjectId" id="3Jgw6gBKuhbza3j5QmetMz1hUaN" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.AeroCloudBackendApplication.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "last_opened_file_path": "/Users/vedavyaasmr/IdeaProjects/aero_resq/aero-cloud-backend/src/main/java/com/pheonix/aerocloudbackend",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/aero-cloud-backend/src/main/java/com/pheonix/aerocloudbackend" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+    <option name="configurationStatuses">
+      <map>
+        <entry key="SpringBootApplicationConfigurationType">
+          <value>
+            <map>
+              <entry key="AeroCloudBackendApplication" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="AeroCloudBackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="aero-cloud-backend" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.pheonix.aerocloudbackend.AeroCloudBackendApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.25134.95" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.25134.95" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ef8e4652-4208-4bc2-a5b2-f6178097070a" name="Changes" comment="" />
+      <created>1783943513996</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1783943513996</updated>
+      <workItem from="1783943515036" duration="1276000" />
+      <workItem from="1790095848663" duration="1561000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
