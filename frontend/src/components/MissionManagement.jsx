@@ -17,6 +17,8 @@ const LocationMarker = ({ position, setPosition }) => {
   return position ? <Marker position={position} /> : null;
 };
 
+import MissionDetails from './MissionDetails';
+
 const riskStyle = (risk) => {
   if (risk === 'HIGH')   return { bg: 'rgba(185,28,28,0.1)',  color: '#dc2626',       border: 'rgba(185,28,28,0.25)' };
   if (risk === 'MEDIUM') return { bg: 'rgba(14,116,144,0.1)', color: 'var(--cyan)',   border: 'rgba(14,116,144,0.25)' };
@@ -25,6 +27,7 @@ const riskStyle = (risk) => {
 
 const MissionManagement = ({ mode, onMissionCreated }) => {
   // ── All hooks at the top — no conditionals ──
+  const [selectedMission, setSelectedMission] = useState(null);
   const [missions, setMissions] = useState([]);
   const [drones, setDrones] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +103,10 @@ const MissionManagement = ({ mode, onMissionCreated }) => {
 
   // ── VIEW MODE ──────────────────────────────────────────────────────────
   if (mode === 'view') {
+    if (selectedMission) {
+      return <MissionDetails mission={selectedMission} onBack={() => setSelectedMission(null)} />;
+    }
+
     return (
       <div className="fade-up">
         <div style={{ marginBottom: '2rem' }}>
@@ -141,7 +148,7 @@ const MissionManagement = ({ mode, onMissionCreated }) => {
                 {missions.map((m) => {
                   const rs = riskStyle(m.riskStatus);
                   return (
-                    <tr key={m.id}>
+                    <tr key={m.id} onClick={() => setSelectedMission(m)} style={{ cursor: 'pointer' }} className="hover-row">
                       <td style={{ fontWeight: '700', color: 'var(--t1)' }}>{m.missionName}</td>
                       <td>
                         <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--t2)' }}>

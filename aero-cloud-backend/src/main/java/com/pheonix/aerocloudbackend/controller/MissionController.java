@@ -30,4 +30,10 @@ public class MissionController {
     public ResponseEntity<Page<MissionDTO>> getMission(@RequestParam Integer start, @RequestParam Integer size, @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(missionService.getMissions(start, size, jwt.getSubject()));
     }
+
+    @Secured("SCOPE_ROLE_USER")
+    @GetMapping("/{missionId}/statistics")
+    public ResponseEntity<java.util.List<com.pheonix.aerocloudbackend.assets.StatisticDTO>> getMissionStatistics(@PathVariable Long missionId, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(missionService.getMissionStatistics(missionId, jwt.getSubject()));
+    }
 }

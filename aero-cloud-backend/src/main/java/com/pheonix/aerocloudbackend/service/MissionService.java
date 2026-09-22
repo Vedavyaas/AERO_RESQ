@@ -15,11 +15,13 @@ public class MissionService {
     private final UserRepository userRepository;
     private final DroneRepository droneRepository;
     private final MissionRepository missionRepository;
+    private final StatisticRepository statisticRepository;
 
-    public MissionService(UserRepository userRepository, DroneRepository droneRepository, MissionRepository missionRepository) {
+    public MissionService(UserRepository userRepository, DroneRepository droneRepository, MissionRepository missionRepository, StatisticRepository statisticRepository) {
         this.userRepository = userRepository;
         this.droneRepository = droneRepository;
         this.missionRepository = missionRepository;
+        this.statisticRepository = statisticRepository;
     }
 
     @Transactional
@@ -75,5 +77,30 @@ public class MissionService {
         Page<MissionEntity> missionEntities = missionRepository.findByOwner_Username(username, pageable);
 
         return missionEntities.map(i -> new MissionDTO(i.getId(), i.getMissionName(), i.getDroneEntity().getDroneCode(), i.getLatitude(), i.getLongitude(), i.getAltitude(), i.getRisk(), i.getMissionStatus()));
+    }
+
+    public java.util.List<StatisticDTO> getMissionStatistics(Long missionId, String username) {
+        Optional<UserEntity> userEntity = userRepository.findByUsername(username);
+        if (userEntity.isEmpty()) {
+            throw new InvalidConfig("Some error occurred. Please try again.");
+        }
+        
+        Optional<MissionEntity> missionEntity = missionRepository.findById(missionId);
+        if (missionEntity.isEmpty() || !missionEntity.get().getOwner().getUsername().equals(username)) {
+            throw new InvalidConfig("Mission not found.");
+        }
+
+        return statisticRepository.findByMissionEntity_Id(missionId).stream()
+                .map(s -> new StatisticDTO(
+                        s.getId(),
+                        s.getLatitude(),
+                        s.getLongitude(),
+                        s.getAltitude(),
+                        s.getTemperature(),
+                        s.getSurvivorProbability(),
+                        s.getStructuralGapFound(),
+                        s.getTimestamp() != null ? s.getTimestamp().toString() : null
+                ))
+                .toList();
     }
 }
