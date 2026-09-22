@@ -2,6 +2,7 @@ package com.pheonix.aerocloudbackend.service;
 
 import com.pheonix.aerocloudbackend.assets.*;
 import com.pheonix.aerocloudbackend.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ public class MissionService {
         this.missionRepository = missionRepository;
     }
 
+    @Transactional
     public String createMission(MissionDetails missionDetails, String username) {
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
 
@@ -32,6 +34,10 @@ public class MissionService {
 
         if (droneEntity.isEmpty()) {
             throw new InvalidConfig("Drone not found. Please try again.");
+        }
+
+        if (droneEntity.get().getDroneStatus().equals(DroneStatus.BOOT)) {
+            throw new InvalidConfig("Drone is in boot. Try with another drone.");
         }
 
         if (droneEntity.get().getDroneStatus().equals(DroneStatus.RETURNING)) {
@@ -52,6 +58,8 @@ public class MissionService {
                         MissionStatus.STARTED,
                         userEntity.get());
 
+        droneEntity.get().setDroneStatus(DroneStatus.IN_MISSION);
+        droneRepository.save(droneEntity.get());
         missionRepository.save(missionEntity);
         return "Mission started successfully.";
     }

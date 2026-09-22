@@ -1,285 +1,335 @@
 import { useState, useEffect } from 'react';
-import { Target, Send, AlertTriangle, MapPin, Search, Plus, ShieldAlert } from 'lucide-react';
+import { Loader2, Plus, ShieldAlert, ChevronLeft, ChevronRight, Navigation } from 'lucide-react';
 import api from '../api/axiosConfig';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-// Component to handle map clicks for lat/lon picking
-const MapClickHandler = ({ setPosition }) => {
-  useMapEvents({
-    click(e) {
-      setPosition(e.latlng);
-    },
-  });
-  return null;
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+const LocationMarker = ({ position, setPosition }) => {
+  useMapEvents({ click(e) { setPosition(e.latlng); } });
+  return position ? <Marker position={position} /> : null;
 };
 
-const MissionManagement = () => {
+const riskStyle = (risk) => {
+  if (risk === 'HIGH')   return { bg: 'rgba(185,28,28,0.1)',  color: '#dc2626',       border: 'rgba(185,28,28,0.25)' };
+  if (risk === 'MEDIUM') return { bg: 'rgba(14,116,144,0.1)', color: 'var(--cyan)',   border: 'rgba(14,116,144,0.25)' };
+  return                        { bg: 'rgba(4,120,87,0.1)',   color: 'var(--emerald)',border: 'rgba(4,120,87,0.25)' };
+};
+
+const MissionManagement = ({ mode, onMissionCreated }) => {
+  // ── All hooks at the top — no conditionals ──
+  const [missions, setMissions] = useState([]);
   const [drones, setDrones] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const PAGE_SIZE = 8;
 
-  // Form State
+  // Create form state
+  const [step, setStep] = useState(1);
   const [missionName, setMissionName] = useState('');
   const [droneId, setDroneId] = useState('');
-  const [altitude, setAltitude] = useState('100');
+  const [altitude, setAltitude] = useState('');
   const [riskStatus, setRiskStatus] = useState('LOW');
-  const [position, setPosition] = useState(null); // {lat, lng}
+  const [position, setPosition] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [createSuccess, setCreateSuccess] = useState(false);
 
-  // Modal State
-  const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    fetchDrones();
-  }, []);
-
-  const fetchDrones = async () => {
-    setLoading(true);
+  const fetchMissions = async () => {
     try {
-      // Fetch all drones so they can be selected. Size 50 to get a good chunk without pagination for now
-      const res = await api.get(`/drone?start=0&size=50`);
-      setDrones(res.data.content);
+      setLoading(true);
+      const res = await api.get(`/mission?start=${page}&size=${PAGE_SIZE}`);
+      setMissions(res.data.content || []);
+      setTotalPages(res.data.totalPages || 1);
+      setTotalElements(res.data.totalElements || 0);
     } catch (err) {
-      console.error('Failed to fetch drones', err);
-      setError('Could not load your drones. Please try again.');
+      console.error('Failed to fetch missions:', err);
+      setError('Could not load missions.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOpenConfirm = (e) => {
-    e.preventDefault();
-    if (!position) {
-      setError('Please select a target location on the map.');
-      return;
+  const fetchDrones = async () => {
+    try {
+      const res = await api.get('/drone?start=0&size=100');
+      setDrones(res.data.content || []);
+    } catch (err) {
+      console.error('Failed to fetch drones:', err);
     }
-    setError('');
-    setShowModal(true);
   };
 
-  const submitMission = async () => {
-    setSubmitting(true);
-    setError('');
-    setSuccess('');
-    
+  useEffect(() => {
+    if (mode === 'view') fetchMissions();
+    if (mode === 'create') fetchDrones();
+  }, [mode, page]);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!position) { alert('Please click the map to select coordinates.'); return; }
+    setCreating(true);
+    setCreateSuccess(false);
     try {
-      const payload = {
+      await api.post('/mission', {
         missionName,
         droneId: parseInt(droneId),
         latitude: position.lat.toString(),
         longitude: position.lng.toString(),
-        altitude: altitude.toString(),
+        altitude,
         riskStatus
-      };
-
-      const res = await api.post('/mission', payload);
-      setSuccess(res.data || 'Mission started successfully.');
-      
-      // Reset form
-      setMissionName('');
-      setDroneId('');
-      setAltitude('100');
-      setRiskStatus('LOW');
-      setPosition(null);
-      setShowModal(false);
+      });
+      setCreateSuccess(true);
+      setMissionName(''); setDroneId(''); setAltitude(''); setRiskStatus('LOW'); setPosition(null); setStep(1);
+      setTimeout(() => { if (onMissionCreated) onMissionCreated(); }, 1200);
     } catch (err) {
-      console.error('Failed to start mission', err);
-      setError(err.response?.data || 'Failed to start mission. Please try again.');
-      setShowModal(false);
+      console.error('Failed to create mission:', err);
+      alert('Failed to create mission.');
     } finally {
-      setSubmitting(false);
+      setCreating(false);
     }
   };
 
-  return (
-    <div className="fade-up">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h2 className="page-title" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Mission Control</h2>
-          <p style={{ color: 'var(--t2)' }}>Deploy drones and assign coordinates</p>
+  // ── VIEW MODE ──────────────────────────────────────────────────────────
+  if (mode === 'view') {
+    return (
+      <div className="fade-up">
+        <div style={{ marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--t1)', marginBottom: '0.25rem' }}>My Missions</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--t2)' }}>
+            {totalElements} {totalElements === 1 ? 'mission' : 'missions'} logged
+          </p>
+        </div>
+
+        {error && (
+          <div className="alert alert-error mb-4" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <ShieldAlert size={16} /> {error}
+          </div>
+        )}
+
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          {loading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4rem', gap: '1rem', color: 'var(--t2)' }}>
+              <Loader2 size={20} style={{ animation: 'spin 0.8s linear infinite' }} /> Loading missions...
+            </div>
+          ) : missions.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--t2)' }}>
+              <Navigation size={40} style={{ opacity: 0.25, margin: '0 auto 1rem', display: 'block' }} />
+              <p style={{ fontWeight: '600', marginBottom: '0.35rem' }}>No missions yet</p>
+              <p style={{ fontSize: '0.82rem' }}>Create your first mission using the sidebar.</p>
+            </div>
+          ) : (
+            <table className="gtable">
+              <thead>
+                <tr>
+                  <th>Mission</th>
+                  <th>Drone</th>
+                  <th>Coordinates</th>
+                  <th>Alt</th>
+                  <th style={{ textAlign: 'right' }}>Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {missions.map((m) => {
+                  const rs = riskStyle(m.riskStatus);
+                  return (
+                    <tr key={m.id}>
+                      <td style={{ fontWeight: '700', color: 'var(--t1)' }}>{m.missionName}</td>
+                      <td>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--t2)' }}>
+                          {m.droneCode || `#${m.droneId}`}
+                        </span>
+                      </td>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--t3)' }}>
+                        {parseFloat(m.latitude).toFixed(4)}, {parseFloat(m.longitude).toFixed(4)}
+                      </td>
+                      <td style={{ color: 'var(--t2)' }}>{m.altitude}m</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '5px',
+                          padding: '3px 10px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
+                          background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`,
+                          textTransform: 'uppercase', letterSpacing: '0.06em'
+                        }}>
+                          {m.riskStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+
+          {!loading && missions.length > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0.85rem 1.25rem',
+              borderTop: '1px solid var(--border-side)',
+              background: 'rgba(59,130,246,0.02)'
+            }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--t3)' }}>
+                Page {page + 1} of {Math.max(1, totalPages)}
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-ghost" onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0} style={{ padding: '5px 12px', fontSize: '0.82rem' }}>
+                  <ChevronLeft size={15} /> Prev
+                </button>
+                <button className="btn btn-primary" onClick={() => setPage(p => p + 1)}
+                  disabled={page >= totalPages - 1} style={{ padding: '5px 12px', fontSize: '0.82rem' }}>
+                  Next <ChevronRight size={15} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+    );
+  }
 
-      {error && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--red)', padding: '1rem', borderRadius: 'var(--r-md)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <AlertTriangle size={18} /> {error}
+  // ── CREATE MODE (2-step wizard) ────────────────────────────────────────
+  return (
+    <div className="fade-up">
+
+      {/* Step indicator */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+        {[1, 2].map((s) => (
+          <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{
+              width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.8rem', fontWeight: '700',
+              background: step >= s ? 'var(--blue)' : 'rgba(180,200,220,0.25)',
+              color: step >= s ? 'white' : 'var(--t3)',
+              transition: 'all 0.2s'
+            }}>{s}</div>
+            <span style={{ fontSize: '0.85rem', fontWeight: step === s ? '700' : '400', color: step === s ? 'var(--t1)' : 'var(--t3)', transition: 'all 0.2s' }}>
+              {s === 1 ? 'Pick Location' : 'Mission Details'}
+            </span>
+            {s < 2 && <div style={{ width: '2rem', height: '1px', background: step > s ? 'var(--blue)' : 'rgba(180,200,220,0.4)', marginLeft: '0.25rem', transition: 'all 0.2s' }} />}
+          </div>
+        ))}
+      </div>
+
+      {createSuccess ? (
+        <div className="glass-card" style={{ padding: '4rem', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <Navigation size={48} color="var(--emerald)" style={{ opacity: 0.8 }} />
+          </div>
+          <h3 style={{ fontWeight: '700', color: 'var(--emerald)', marginBottom: '0.5rem' }}>Mission Created!</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--t2)' }}>Redirecting to your missions...</p>
         </div>
-      )}
 
-      {success && (
-        <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: 'var(--emerald)', padding: '1rem', borderRadius: 'var(--r-md)', marginBottom: '1.5rem' }}>
-          {success}
+      ) : step === 1 ? (
+        /* ── STEP 1: MAP ── */
+        <div>
+          <div style={{ marginBottom: '0.6rem' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--t1)', marginBottom: '0.15rem' }}>Select Target Location</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--t2)' }}>Click anywhere on the map to drop a pin</p>
+          </div>
+
+          <div style={{ borderRadius: '14px', overflow: 'hidden', height: 'calc(100vh - 320px)', minHeight: '280px', maxHeight: '420px', border: '1px solid var(--border-side)', boxShadow: 'var(--shadow-card)', marginBottom: '0.85rem' }}>
+            <MapContainer center={[11.0168, 76.9558]} zoom={11} style={{ height: '100%', width: '100%' }}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <LocationMarker position={position} setPosition={setPosition} />
+            </MapContainer>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{
+              padding: '0.6rem 0.9rem', borderRadius: '10px',
+              background: position ? 'rgba(4,120,87,0.06)' : 'rgba(0,0,0,0.03)',
+              border: position ? '1px solid rgba(4,120,87,0.2)' : '1px dashed rgba(180,200,220,0.5)',
+              fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: '600',
+              color: position ? 'var(--emerald)' : 'var(--t3)',
+            }}>
+              {position ? `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}` : 'No location selected yet'}
+            </div>
+            <button
+              className="btn btn-primary"
+              disabled={!position}
+              onClick={() => setStep(2)}
+              style={{ padding: '10px 22px', fontSize: '0.9rem' }}
+            >
+              Next: Mission Details →
+            </button>
+          </div>
         </div>
-      )}
 
-      {loading ? (
-        <div style={{ textAlign: 'center', color: 'var(--t2)', padding: '2rem' }}>Loading system assets...</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          
-          {/* Form Side */}
-          <div className="win" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--t1)' }}>
-              <Target size={20} color="var(--emerald)" /> Mission Parameters
-            </h3>
-            
-            <form onSubmit={handleOpenConfirm}>
+        /* ── STEP 2: DETAILS ── */
+        <div style={{ maxWidth: '560px' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: '700', color: 'var(--t1)', marginBottom: '0.2rem' }}>Mission Details</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--t2)' }}>
+              Location locked at{' '}
+              <span style={{ fontFamily: 'monospace', color: 'var(--emerald)', fontWeight: '600' }}>
+                {position?.lat.toFixed(4)}, {position?.lng.toFixed(4)}
+              </span>
+              {' · '}
+              <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: 'var(--blue-l)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', padding: 0 }}>
+                Change
+              </button>
+            </p>
+          </div>
+
+          <div className="glass-card" style={{ padding: '2rem' }}>
+            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="field">
-                <label style={{ color: 'var(--t1)', fontWeight: '600' }}>Mission Name</label>
-                <input 
-                  type="text" 
-                  className="fi" 
-                  placeholder="e.g. Sector 7 Search"
-                  value={missionName}
-                  onChange={(e) => setMissionName(e.target.value)}
-                  required
-                />
+                <label>Mission Name</label>
+                <input type="text" className="fi" placeholder="e.g. Search Grid Alpha"
+                  value={missionName} onChange={e => setMissionName(e.target.value)} required style={{ padding: '13px 16px' }} />
               </div>
 
               <div className="field">
-                <label style={{ color: 'var(--t1)', fontWeight: '600' }}>Assign Drone</label>
-                <select 
-                  className="fi" 
-                  value={droneId}
-                  onChange={(e) => setDroneId(e.target.value)}
-                  required
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value="" disabled>Select an available drone...</option>
-                  {drones.map(d => (
-                    <option key={d.id} value={d.id} disabled={d.droneStatus === 'IN_MISSION' || d.droneStatus === 'RETURNING'}>
-                      {d.droneCode} ({d.model}) - {d.droneStatus}
-                    </option>
+                <label>Assign Drone</label>
+                <select className="fi" value={droneId} onChange={e => setDroneId(e.target.value)} required style={{ padding: '13px 16px' }}>
+                  <option value="">— Select a drone —</option>
+                  {drones.filter(d => d.droneStatus === 'READY').map(d => (
+                    <option key={d.id} value={d.id}>{d.droneCode} · {d.model}</option>
                   ))}
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="field">
-                  <label style={{ color: 'var(--t1)', fontWeight: '600' }}>Flight Altitude (m)</label>
-                  <input 
-                    type="number" 
-                    className="fi" 
-                    min="10"
-                    max="500"
-                    value={altitude}
-                    onChange={(e) => setAltitude(e.target.value)}
-                    required
-                  />
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="field" style={{ flex: 1 }}>
+                  <label>Altitude (m)</label>
+                  <input type="number" className="fi" placeholder="100" value={altitude}
+                    onChange={e => setAltitude(e.target.value)} required style={{ padding: '13px 16px' }} />
                 </div>
-                <div className="field">
-                  <label style={{ color: 'var(--t1)', fontWeight: '600' }}>Risk Assessment</label>
-                  <select 
-                    className="fi" 
-                    value={riskStatus}
-                    onChange={(e) => setRiskStatus(e.target.value)}
-                    required
-                  >
-                    <option value="LOW">LOW</option>
-                    <option value="MEDIUM">MEDIUM</option>
-                    <option value="HIGH">HIGH</option>
+                <div className="field" style={{ flex: 1 }}>
+                  <label>Risk Level</label>
+                  <select className="fi" value={riskStatus} onChange={e => setRiskStatus(e.target.value)} style={{ padding: '13px 16px' }}>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
                   </select>
                 </div>
               </div>
 
-              <div className="field" style={{ marginBottom: '2rem' }}>
-                <label style={{ color: 'var(--t1)', fontWeight: '600' }}>Target Coordinates</label>
-                <div style={{ display: 'flex', gap: '1rem', background: 'rgba(255,255,255,0.5)', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border-side)' }}>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--t2)', display: 'block' }}>LATITUDE</span>
-                    <span style={{ fontWeight: 500, color: position ? 'var(--t1)' : 'var(--t3)' }}>{position ? position.lat.toFixed(6) : 'Select on map'}</span>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--t2)', display: 'block' }}>LONGITUDE</span>
-                    <span style={{ fontWeight: 500, color: position ? 'var(--t1)' : 'var(--t3)' }}>{position ? position.lng.toFixed(6) : 'Select on map'}</span>
-                  </div>
-                </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setStep(1)} style={{ flex: 1, padding: '13px' }}>
+                  ← Back to Map
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={creating} style={{ flex: 2, padding: '13px', fontSize: '0.95rem' }}>
+                  {creating
+                    ? <><Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite' }} /> Submitting...</>
+                    : <><Plus size={18} /> Launch Mission</>}
+                </button>
               </div>
-
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>
-                <Send size={18} /> Initialize Deployment
-              </button>
             </form>
-          </div>
-
-          {/* Map Side */}
-          <div className="win" style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-side)' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--t1)' }}>
-                <MapPin size={18} color="var(--emerald)" /> Coordinate Selection
-              </h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--t2)', marginTop: '0.25rem' }}>Click anywhere on the map to set the mission target area.</p>
-            </div>
-            
-            <div style={{ flex: 1, minHeight: '400px', width: '100%' }}>
-              <MapContainer 
-                center={[37.7749, -122.4194]} // Default to SF or change to user pref
-                zoom={10} 
-                style={{ height: '100%', width: '100%', zIndex: 1 }}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <MapClickHandler setPosition={setPosition} />
-                {position && (
-                  <Marker position={position}></Marker>
-                )}
-              </MapContainer>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999
-        }}>
-          <div className="win fade-up" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', color: 'var(--emerald)' }}>
-              <ShieldAlert size={32} />
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Confirm Dispatch</h3>
-            </div>
-            
-            <p style={{ color: 'var(--t1)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-              You are about to deploy drone <strong>{drones.find(d => d.id === parseInt(droneId))?.droneCode}</strong> on mission <strong>"{missionName}"</strong>.
-            </p>
-
-            <div style={{ background: 'rgba(255,255,255,0.5)', padding: '1rem', borderRadius: 'var(--r-md)', marginBottom: '2rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div><span style={{ fontSize: '0.8rem', color: 'var(--t2)' }}>RISK LEVEL</span><br/><strong>{riskStatus}</strong></div>
-                <div><span style={{ fontSize: '0.8rem', color: 'var(--t2)' }}>ALTITUDE</span><br/><strong>{altitude}m</strong></div>
-                <div><span style={{ fontSize: '0.8rem', color: 'var(--t2)' }}>LATITUDE</span><br/><strong>{position?.lat.toFixed(4)}</strong></div>
-                <div><span style={{ fontSize: '0.8rem', color: 'var(--t2)' }}>LONGITUDE</span><br/><strong>{position?.lng.toFixed(4)}</strong></div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="btn btn-ghost" 
-                style={{ flex: 1, justifyContent: 'center' }}
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={submitMission} 
-                className="btn btn-primary" 
-                style={{ flex: 1, justifyContent: 'center' }}
-                disabled={submitting}
-              >
-                {submitting ? 'Dispatching...' : 'Confirm & Deploy'}
-              </button>
-            </div>
           </div>
         </div>
       )}

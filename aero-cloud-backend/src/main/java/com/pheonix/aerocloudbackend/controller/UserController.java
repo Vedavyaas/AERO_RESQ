@@ -42,11 +42,6 @@ public class UserController {
         return ResponseEntity.ok(userService.toggleEnabled(id));
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<JWTToken> login() {
-        return null;
-    }
-
     @PostMapping("/authenticate")
     public ResponseEntity<JWTToken> authenticate(@RequestBody LoginCredentials loginCredentials) {
         return ResponseEntity.ok(userService.authenticate(loginCredentials));

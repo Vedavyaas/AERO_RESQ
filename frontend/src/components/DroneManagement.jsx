@@ -1,217 +1,269 @@
 import { useState, useEffect } from 'react';
-import { Plus, Send, XCircle, CheckCircle, Search, Cpu } from 'lucide-react';
+import { Loader2, Plus, ShieldAlert, ChevronLeft, ChevronRight, Drone } from 'lucide-react';
 import api from '../api/axiosConfig';
 
-const DroneManagement = () => {
-  const [activeTab, setActiveTab] = useState('view');
-  
-  // Registration Form State
+const DroneManagement = ({ mode, onDroneCreated }) => {
+  const [drones, setDrones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const PAGE_SIZE = 8;
+
+  // Create form state
   const [droneCode, setDroneCode] = useState('');
   const [model, setModel] = useState('');
-  const [registerLoading, setRegisterLoading] = useState(false);
-  const [registerStatus, setRegisterStatus] = useState({ type: '', message: '' });
+  const [creating, setCreating] = useState(false);
+  const [createSuccess, setCreateSuccess] = useState(false);
 
-  // List State
-  const [drones, setDrones] = useState([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [listLoading, setListLoading] = useState(false);
-
-  const fetchDrones = async (pageNum = 0) => {
-    setListLoading(true);
+  const fetchDrones = async () => {
     try {
-      const res = await api.get(`/drone?start=${pageNum}&size=5`);
-      setDrones(res.data.content);
-      setTotalPages(res.data.totalPages);
-      setPage(pageNum);
+      setLoading(true);
+      const response = await api.get(`/drone?start=${page}&size=${PAGE_SIZE}`);
+      setDrones(response.data.content || []);
+      setTotalPages(response.data.totalPages || 1);
+      setTotalElements(response.data.totalElements || 0);
     } catch (err) {
-      console.error('Failed to fetch drones', err);
+      console.error('Failed to fetch drones:', err);
+      setError('Could not load drones.');
     } finally {
-      setListLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'view') {
-      fetchDrones(0);
-    }
-  }, [activeTab]);
+    if (mode === 'view') fetchDrones();
+  }, [mode, page]);
 
-  const handleRegister = async (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
-    setRegisterLoading(true);
-    setRegisterStatus({ type: '', message: '' });
-
+    setCreating(true);
+    setCreateSuccess(false);
     try {
-      const res = await api.post('/drone', { droneCode, model });
-      setRegisterStatus({ type: 'success', message: res.data });
+      await api.post('/drone', { droneCode, model });
+      setCreateSuccess(true);
       setDroneCode('');
       setModel('');
+      setTimeout(() => {
+        if (onDroneCreated) onDroneCreated();
+      }, 1200);
     } catch (err) {
-      setRegisterStatus({ 
-        type: 'error', 
-        message: err.response?.data?.message || 'Failed to register drone.' 
-      });
+      console.error('Failed to create drone:', err);
+      alert('Failed to register drone. It may already exist.');
     } finally {
-      setRegisterLoading(false);
+      setCreating(false);
     }
   };
 
-  return (
-    <div className="win p-8 fade-up" style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
-        <div>
-          <h2 className="page-title mb-1" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Cpu color="var(--emerald)" /> Drone Management
-          </h2>
-          <p style={{ color: 'var(--t2)', fontSize: '0.9rem' }}>Manage your fleet and register new drones.</p>
+  const toggleStatus = async (drone) => {
+    // Only toggle between BOOT and READY
+    const newStatus = drone.droneStatus === 'READY' ? 'BOOT' : 'READY';
+    try {
+      await api.patch(`/drone?id=${drone.id}&status=${newStatus}`);
+      fetchDrones();
+    } catch (err) {
+      console.error('Failed to toggle drone status:', err);
+      alert('Could not update drone status.');
+    }
+  };
+
+  const statusColor = (status) => {
+    if (status === 'READY')      return { bg: 'rgba(4,120,87,0.1)',    color: 'var(--emerald)', border: 'rgba(4,120,87,0.25)' };
+    if (status === 'IN_MISSION') return { bg: 'rgba(14,116,144,0.1)',  color: 'var(--cyan)',    border: 'rgba(14,116,144,0.25)' };
+    if (status === 'RETURNING')  return { bg: 'rgba(217,119,6,0.1)',   color: 'var(--gold-l)', border: 'rgba(217,119,6,0.25)' };
+    if (status === 'BOOT')       return { bg: 'rgba(109,40,217,0.08)', color: 'var(--violet)', border: 'rgba(109,40,217,0.2)' };
+    return { bg: 'rgba(180,200,220,0.15)', color: 'var(--t2)', border: 'rgba(180,200,220,0.4)' };
+  };
+
+
+  const statusLabel = (status) => {
+    if (status === 'IN_MISSION') return 'In Mission';
+    if (status === 'RETURNING')  return 'Returning';
+    if (status === 'BOOT')       return 'Booting';
+    if (status === 'READY')      return 'Ready';
+    return status || 'Unknown';
+  };
+
+  // ── VIEW MODE ──────────────────────────────────────────────────────────
+  if (mode === 'view') {
+    return (
+      <div className="fade-up">
+        <div style={{ marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--t1)', marginBottom: '0.25rem' }}>My Drones</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--t2)' }}>
+            {totalElements} registered {totalElements === 1 ? 'drone' : 'drones'}
+          </p>
         </div>
-      </div>
 
-      {/* Internal Nav Tabs */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '1rem', 
-        marginBottom: '2rem',
-        borderBottom: '1px solid var(--border-side)',
-        paddingBottom: '1rem'
-      }}>
-        <button 
-          onClick={() => setActiveTab('view')}
-          className={`btn ${activeTab === 'view' ? 'btn-primary' : 'btn-ghost'}`}
-        >
-          <Search size={16} /> My Drones
-        </button>
-        <button 
-          onClick={() => setActiveTab('register')}
-          className={`btn ${activeTab === 'register' ? 'btn-primary' : 'btn-ghost'}`}
-        >
-          <Plus size={16} /> Register Drone
-        </button>
-      </div>
+        {error && (
+          <div className="alert alert-error mb-4" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <ShieldAlert size={16} /> {error}
+          </div>
+        )}
 
-      {/* Register Tab */}
-      {activeTab === 'register' && (
-        <div style={{ maxWidth: '500px' }} className="fade-up">
-          <h3 style={{ marginBottom: '1.5rem', color: 'var(--t1)' }}>Register New Drone</h3>
-          
-          {registerStatus.message && (
-            <div className={`alert ${registerStatus.type === 'success' ? 'alert-success' : 'alert-error'} mb-6`}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                {registerStatus.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
-                <span>{registerStatus.message}</span>
-              </div>
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          {loading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4rem', gap: '1rem', color: 'var(--t2)' }}>
+              <Loader2 size={20} style={{ animation: 'spin 0.8s linear infinite' }} /> Loading drones...
             </div>
-          )}
-
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div className="field">
-              <label htmlFor="droneCode" style={{ color: 'var(--t1)', fontWeight: '600' }}>Drone Code</label>
-              <input 
-                type="text" 
-                id="droneCode" 
-                className="fi" 
-                style={{ padding: '11px 14px' }}
-                placeholder="e.g. AERO-X1-001"
-                value={droneCode}
-                onChange={(e) => setDroneCode(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="field">
-              <label htmlFor="model" style={{ color: 'var(--t1)', fontWeight: '600' }}>Drone Model</label>
-              <input 
-                type="text" 
-                id="model" 
-                className="fi" 
-                style={{ padding: '11px 14px' }}
-                placeholder="e.g. DJI Matrice 300 RTK"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div style={{ marginTop: '1rem' }}>
-              <button type="submit" className="btn btn-primary" disabled={registerLoading} style={{ width: '100%' }}>
-                {registerLoading ? 'Registering...' : 'Register Drone'} <Send size={16} />
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* View Tab */}
-      {activeTab === 'view' && (
-        <div className="fade-up">
-          {listLoading ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--t2)' }}>Loading drones...</div>
           ) : drones.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', background: 'rgba(255,255,255,0.4)', borderRadius: 'var(--r-md)', border: '1px dashed var(--border-side)' }}>
-              <Cpu size={48} color="var(--t3)" style={{ margin: '0 auto 1rem auto' }} />
-              <p style={{ color: 'var(--t2)', fontSize: '1.1rem' }}>You haven't registered any drones yet.</p>
-              <button onClick={() => setActiveTab('register')} className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                <Plus size={16} /> Register Now
-              </button>
+            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--t2)' }}>
+              <Drone size={40} style={{ opacity: 0.25, margin: '0 auto 1rem', display: 'block' }} />
+              <p style={{ fontWeight: '600', marginBottom: '0.35rem' }}>No drones registered yet</p>
+              <p style={{ fontSize: '0.82rem' }}>Register your first drone from the sidebar.</p>
             </div>
           ) : (
-            <div>
-              <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.6)', borderRadius: 'var(--r-md)', border: '1px solid var(--border-side)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-side)', background: 'rgba(255,255,255,0.5)' }}>
-                      <th style={{ padding: '1rem', color: 'var(--t2)', fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.05em' }}>DRONE CODE</th>
-                      <th style={{ padding: '1rem', color: 'var(--t2)', fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.05em' }}>MODEL</th>
-                      <th style={{ padding: '1rem', color: 'var(--t2)', fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.05em' }}>STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {drones.map(drone => (
-                      <tr key={drone.id} style={{ borderBottom: '1px solid var(--border-side)' }}>
-                        <td style={{ padding: '1rem', fontWeight: 500, color: 'var(--t1)' }}>{drone.droneCode}</td>
-                        <td style={{ padding: '1rem', color: 'var(--t2)' }}>{drone.model}</td>
-                        <td style={{ padding: '1rem' }}>
-                          <span className={`badge ${drone.droneStatus === 'IN_MISSION' ? 'badge-on' : drone.droneStatus === 'BOOT' ? 'badge-off' : ''}`} style={{
-                            background: drone.droneStatus === 'READY' ? 'rgba(59, 130, 246, 0.15)' : '',
-                            color: drone.droneStatus === 'READY' ? 'var(--blue)' : '',
-                            border: drone.droneStatus === 'READY' ? '1px solid rgba(59, 130, 246, 0.3)' : ''
-                          }}>
-                            {drone.droneStatus}
+            <table className="gtable">
+              <thead>
+                <tr>
+                  <th>Drone</th>
+                  <th>Model</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Toggle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {drones.map((drone) => {
+                  const sc = statusColor(drone.droneStatus);
+                  return (
+                    <tr key={drone.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{
+                            width: '34px', height: '34px', borderRadius: '8px', flexShrink: 0,
+                            background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05))',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}><Drone size={18} color="var(--blue-l)" /></div>
+                          <span style={{ fontWeight: '700', color: 'var(--t1)', fontFamily: 'monospace', fontSize: '0.95rem' }}>
+                            {drone.droneCode}
                           </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </td>
+                      <td style={{ color: 'var(--t2)' }}>{drone.model}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '5px',
+                          padding: '3px 10px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: '700',
+                          background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`,
+                          letterSpacing: '0.04em'
+                        }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: sc.color, flexShrink: 0 }}></span>
+                          {statusLabel(drone.droneStatus)}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {(drone.droneStatus === 'BOOT' || drone.droneStatus === 'READY') && (
+                          <button
+                            onClick={() => toggleStatus(drone)}
+                            className={`btn ${drone.droneStatus === 'READY' ? 'btn-danger' : 'btn-primary'}`}
+                            style={{ padding: '5px 14px', fontSize: '0.78rem' }}
+                          >
+                            {drone.droneStatus === 'READY' ? 'Set Boot' : 'Set Ready'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem', alignItems: 'center' }}>
-                  <button 
-                    className="btn btn-ghost" 
-                    onClick={() => fetchDrones(page - 1)} 
-                    disabled={page === 0}
-                  >
-                    Prev
-                  </button>
-                  <span style={{ fontSize: '0.9rem', color: 'var(--t2)', fontWeight: 500 }}>
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <button 
-                    className="btn btn-ghost" 
-                    onClick={() => fetchDrones(page + 1)} 
-                    disabled={page >= totalPages - 1}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+          {!loading && drones.length > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0.85rem 1.25rem',
+              borderTop: '1px solid var(--border-side)',
+              background: 'rgba(59,130,246,0.02)'
+            }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--t3)' }}>
+                Page {page + 1} of {Math.max(1, totalPages)}
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-ghost" onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0} style={{ padding: '5px 12px', fontSize: '0.82rem' }}>
+                  <ChevronLeft size={15} /> Prev
+                </button>
+                <button className="btn btn-primary" onClick={() => setPage(p => p + 1)}
+                  disabled={page >= totalPages - 1} style={{ padding: '5px 12px', fontSize: '0.82rem' }}>
+                  Next <ChevronRight size={15} />
+                </button>
+              </div>
             </div>
           )}
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // ── CREATE MODE ────────────────────────────────────────────────────────
+  return (
+    <div className="fade-up">
+      <div style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--t1)', marginBottom: '0.25rem' }}>Register Drone</h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--t2)' }}>Add a new drone to your fleet</p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
+        <div className="glass-card" style={{ padding: '2rem' }}>
+          {createSuccess ? (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+              <Drone size={48} color="var(--emerald)" style={{ opacity: 0.8 }} />
+            </div>
+            <h3 style={{ fontWeight: '700', color: 'var(--emerald)', marginBottom: '0.5rem' }}>Drone Registered!</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--t2)' }}>Redirecting to your fleet...</p>
+            </div>
+          ) : (
+            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="field">
+                <label>Drone Code</label>
+                <input type="text" className="fi" placeholder="e.g. D-101"
+                  value={droneCode} onChange={e => setDroneCode(e.target.value)} required
+                  style={{ padding: '13px 16px' }} />
+              </div>
+              <div className="field">
+                <label>Model</label>
+                <input type="text" className="fi" placeholder="e.g. DJI Mavic 3"
+                  value={model} onChange={e => setModel(e.target.value)} required
+                  style={{ padding: '13px 16px' }} />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={creating}
+                style={{ padding: '14px', fontSize: '0.95rem', marginTop: '0.5rem' }}>
+                {creating
+                  ? <><Loader2 size={18} style={{ animation: 'spin 0.8s linear infinite' }} /> Registering...</>
+                  : <><Plus size={18} /> Register Drone</>}
+              </button>
+            </form>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="glass-card" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+              <div style={{ background: 'rgba(59,130,246,0.1)', padding: '0.4rem', borderRadius: '8px', flexShrink: 0 }}><Drone size={16} color="var(--blue-l)" /></div>
+              <div>
+                <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '0.3rem' }}>Drone Code</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--t2)', lineHeight: 1.5 }}>
+                  A unique short identifier for the drone. Used in missions and logs.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="glass-card" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+              <div style={{ background: 'rgba(59,130,246,0.1)', padding: '0.4rem', borderRadius: '8px', flexShrink: 0 }}><Plus size={16} color="var(--blue-l)" /></div>
+              <div>
+                <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '0.3rem' }}>Model</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--t2)', lineHeight: 1.5 }}>
+                  The manufacturer model name, e.g. DJI Mavic 3, Parrot Anafi.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

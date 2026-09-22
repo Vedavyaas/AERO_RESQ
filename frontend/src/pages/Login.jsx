@@ -21,9 +21,10 @@ const Login = () => {
 
       const { token } = response.data;
       if (token) {
-        localStorage.setItem('jwt_token', token);
-        const userResponse = await api.get('/user/');
+        localStorage.setItem('token', token);
+        const userResponse = await api.get('/user');
         const userRole = userResponse.data.role;
+        localStorage.setItem('role', userRole);
 
         if (userRole === 'ADMIN') {
           navigate('/admin');
