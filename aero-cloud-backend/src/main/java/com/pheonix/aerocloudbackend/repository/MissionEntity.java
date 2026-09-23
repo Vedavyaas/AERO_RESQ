@@ -19,7 +19,11 @@ public class MissionEntity {
     private String latitude;
     private String longitude;
     private String altitude;
+
+    @Enumerated(value = EnumType.STRING)
     private RiskStatus risk;
+
+    @Enumerated(value = EnumType.STRING)
     private MissionStatus missionStatus;
 
     @ManyToOne

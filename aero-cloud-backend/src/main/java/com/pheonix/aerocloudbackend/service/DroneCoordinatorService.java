@@ -37,12 +37,11 @@ public class DroneCoordinatorService {
         for (var mission : missionEntities) {
             RestTemplate restTemplate = new RestTemplate();
             
-            String url = String.format("%s?latitude=%s&longitude=%s&altitude=%s&status=%s", 
+            String url = String.format("%s?latitude=%s&longitude=%s&altitude=%s",
                 uri, 
                 mission.getLatitude(), 
                 mission.getLongitude(), 
-                mission.getAltitude(), 
-                mission.getRisk().name()
+                mission.getAltitude()
             );
             
             try {
