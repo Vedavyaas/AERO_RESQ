@@ -24,22 +24,56 @@ def simulation_loop():
     global simulation_active, mission_target, api_client
     print("Simulation thread started, waiting for mission to be initiated...")
     
+    path_step = 0
+    GRID_SIZE = 10 # 10x10 grid of points
+    STEP_DISTANCE = 0.0001 # Roughly 10 meters between points
+
     while True:
         if not simulation_active or not mission_target:
             time.sleep(1)
+            path_step = 0 # reset path when waiting
             continue
             
-        # 1. Generate sample drone statistics data based on the mission target
+        base_lat = float(mission_target.get('latitude', 34.0522))
+        base_lon = float(mission_target.get('longitude', -118.2437))
+        
+        # Calculate row and column for the grid
+        row = (path_step // GRID_SIZE) % GRID_SIZE
+        col = path_step % GRID_SIZE
+        
+        # Snake pattern (lawnmower): reverse direction on odd rows
+        if row % 2 == 1:
+            col = (GRID_SIZE - 1) - col
+            
+        # Place dots perfectly in a grid without jitter to form a solid block
+        current_lat = base_lat + (row * STEP_DISTANCE) - (GRID_SIZE * STEP_DISTANCE / 2)
+        current_lon = base_lon + (col * STEP_DISTANCE) - (GRID_SIZE * STEP_DISTANCE / 2)
+        
+        # Simulate a structural gap cluster exactly in the middle of the block
+        gap_found = False
+        if 4 <= row <= 5 and 4 <= col <= 5: # A 2x2 cluster in the middle
+            gap_found = True
+            
+        # Generate clean, stable metrics for the block
+        temp = 25.0
+        prob = 0.0
+        if gap_found:
+            temp = 65.0   # Solid thermal spike
+            prob = 0.95   # High survivor probability
+            
+        # 1. Generate sample drone statistics data based on the grid block
         sample_data = {
             "droneCode": api_client.drone_code,
-            "latitude": float(mission_target.get('latitude', 34.0522)) + random.uniform(-0.001, 0.001),
-            "longitude": float(mission_target.get('longitude', -118.2437)) + random.uniform(-0.001, 0.001),
-            "altitude": float(mission_target.get('altitude', 150.0)) + random.uniform(-5.0, 5.0),
-            "temperature": 25.0 + random.uniform(-2.0, 2.0),
-            "survivorProbability": random.uniform(0.0, 1.0),
-            "structuralGapFound": random.choice([True, False, False]), # 33% chance
+            "latitude": current_lat,
+            "longitude": current_lon,
+            "altitude": float(mission_target.get('altitude', 150.0)),
+            "temperature": temp,
+            "survivorProbability": prob,
+            "structuralGapFound": gap_found,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
+        
+        path_step += 1
         
         # Add new data to the buffer
         telemetry_buffer.append(sample_data)

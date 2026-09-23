@@ -40,51 +40,97 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (userRepository.count() > 0) return; // Prevent duplicate seeding
+        // Clear existing data to allow re-seeding with new data
+        statisticRepository.deleteAll();
+        missionRepository.deleteAll();
+        droneRepository.deleteAll();
+        userRepository.deleteAll();
 
         UserEntity userEntity = new UserEntity("admin", passwordEncoder.encode("123"), Role.ADMIN);
         UserEntity userEntity1 = new UserEntity("user", passwordEncoder.encode("123"), Role.USER);
         userRepository.save(userEntity);
         userRepository.save(userEntity1);
 
-        DroneEntity drone = new DroneEntity("DRN-X100", "DJI Inspire 3", userEntity1);
-        droneRepository.save(drone);
-
-        MissionEntity mission = new MissionEntity(
-                "Operation Gamma", drone, "11.0168", "76.9558", "120.0", RiskStatus.HIGH, MissionStatus.IN_PROGRESS, userEntity1
-        );
-        missionRepository.save(mission);
+        DroneEntity drone1 = new DroneEntity("DRN-X100", "DJI Inspire 3", userEntity1);
+        DroneEntity drone2 = new DroneEntity("DRN-Mavic", "DJI Mavic 3 Enterprise", userEntity1);
+        DroneEntity drone3 = new DroneEntity("DRN-Matrice", "DJI Matrice 300 RTK", userEntity1);
+        droneRepository.saveAll(List.of(drone1, drone2, drone3));
+        DroneEntity[] drones = {drone1, drone2, drone3};
 
         Random random = new Random();
         List<StatisticEntity> stats = new ArrayList<>();
-        double baseLat = 11.0168;
-        double baseLng = 76.9558;
 
-        for (int i = 0; i < 500; i++) {
-            // Generate points in a ~1km radius roughly
-            double latOffset = (random.nextDouble() - 0.5) * 0.01;
-            double lngOffset = (random.nextDouble() - 0.5) * 0.01;
-            
-            // Create some clusters of high probability / temp
-            double distFromCenter = Math.sqrt(Math.pow(latOffset, 2) + Math.pow(lngOffset, 2));
-            double survivorProb = Math.max(0, 1.0 - (distFromCenter * 150)); 
-            if (random.nextDouble() > 0.9) survivorProb = 0.9; // Random noise
+        // Create multiple missions to test with
+        String[][] missionData = {
+            {"Operation Gamma", "11.0168", "76.9558"},
+            {"Operation Alpha", "34.0522", "-118.2437"}, // LA
+            {"Operation Beta", "40.7128", "-74.0060"}    // NY
+        };
 
-            double temp = 25.0 + (survivorProb * 15) + (random.nextDouble() * 5);
-            boolean gap = survivorProb > 0.8 && random.nextDouble() > 0.7;
+        for (int mIndex = 0; mIndex < missionData.length; mIndex++) {
+            String[] mData = missionData[mIndex];
+            String name = mData[0];
+            double baseLat = Double.parseDouble(mData[1]);
+            double baseLng = Double.parseDouble(mData[2]);
 
-            StatisticEntity stat = new StatisticEntity(
-                    mission,
-                    baseLat + latOffset,
-                    baseLng + lngOffset,
-                    120.0 + (random.nextDouble() * 10),
-                    temp,
-                    survivorProb,
-                    gap,
-                    LocalDateTime.now().minusMinutes(random.nextInt(60))
+            MissionEntity mission = new MissionEntity(
+                    name, drones[mIndex], String.valueOf(baseLat), String.valueOf(baseLng), "120.0", RiskStatus.HIGH, MissionStatus.IN_PROGRESS, userEntity1
             );
-            stats.add(stat);
+            missionRepository.save(mission);
+
+            // Organic, natural-looking structure generation using Gaussian distribution
+            double[][] clusters = {
+                {0.002, -0.002, 0.001, 0}, // Cluster A (Block)
+                {0.0025, 0.002, 0.0008, 1}, // Cluster B (Gap - high survivor)
+                {-0.003, 0.001, 0.0012, 0}, // Cluster C (Block)
+                {-0.001, -0.001, 0.0005, 0}, // Cluster D (small dense debris)
+                {0.000, 0.003, 0.001, 1}, // Cluster E (Gap - east)
+                {-0.002, -0.003, 0.0015, 1}, // Cluster F (Gap - southwest, wide spread)
+                {0.004, 0.000, 0.0007, 0}, // Cluster G (Block - north)
+                {-0.004, 0.002, 0.0009, 1}, // Cluster H (Gap - south east)
+                {0.001, 0.001, 0.0004, 0}, // Cluster I (Small block near center)
+                {-0.002, 0.003, 0.0011, 0} // Cluster J (Block)
+            };
+            
+            for (double[] cluster : clusters) {
+                double cLat = baseLat + cluster[0];
+                double cLng = baseLng + cluster[1];
+                double spread = cluster[2];
+                boolean hasGap = cluster[3] > 0;
+                
+                // Generate 120 points per cluster for a solid density
+                for (int i = 0; i < 120; i++) {
+                    double lat = cLat + (random.nextGaussian() * spread);
+                    double lng = cLng + (random.nextGaussian() * spread);
+                    
+                    boolean isGap = false;
+                    double temp = 25.0 + random.nextDouble() * 3;
+                    double prob = random.nextDouble() * 0.15;
+                    
+                    if (hasGap && i < 15) { // The first 15 points of this cluster are the high-heat gap
+                        isGap = true;
+                        lat = cLat + (random.nextGaussian() * (spread * 0.2)); 
+                        lng = cLng + (random.nextGaussian() * (spread * 0.2));
+                        
+                        temp = 60.0 + random.nextDouble() * 15; // 60-75 temp
+                        prob = 0.85 + random.nextDouble() * 0.15; // High prob
+                    }
+                    
+                    StatisticEntity stat = new StatisticEntity(
+                            mission,
+                            lat,
+                            lng,
+                            120.0 + (random.nextGaussian() * 5),
+                            temp,
+                            prob,
+                            isGap,
+                            LocalDateTime.now().minusMinutes(random.nextInt(60))
+                    );
+                    stats.add(stat);
+                }
+            }
         }
         statisticRepository.saveAll(stats);
+
     }
 }
