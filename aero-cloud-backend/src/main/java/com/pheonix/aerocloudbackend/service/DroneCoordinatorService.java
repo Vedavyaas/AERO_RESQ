@@ -18,7 +18,7 @@ import java.util.Optional;
 
 @Service
 public class DroneCoordinatorService {
-    private static final String uri = "http://localhost:8000/initiate";
+    private static final String uri = "http://10.253.241.239:5000/initiate";
     private final MissionRepository missionRepository;
     private final DroneRepository droneRepository;
     private final StatisticRepository statisticRepository;
@@ -45,7 +45,7 @@ public class DroneCoordinatorService {
             );
             
             try {
-                ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, null, String.class);
+                ResponseEntity<String> responseEntity = restTemplate.getForEntity(url, null, String.class);
                 if (responseEntity.getStatusCode().is2xxSuccessful()) {
                     mission.setMissionStatus(MissionStatus.IN_PROGRESS);
                 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, ArrowLeft, Thermometer, Users, ShieldAlert } from 'lucide-react';
+import { Loader2, ArrowLeft, Thermometer, Users, ShieldAlert, RefreshCw } from 'lucide-react';
 import api from '../api/axiosConfig';
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Rectangle, Polyline } from 'react-leaflet';
 import HeatmapLayer from './HeatmapLayer';
@@ -16,20 +16,24 @@ const MissionDetails = ({ mission, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [metric, setMetric] = useState('survivorProbability'); // 'survivorProbability' or 'temperature'
+  const [showPath, setShowPath] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await api.get(`/mission/${mission.id}/statistics`);
+      setStats(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch mission statistics:', err);
+      setError('Could not load telemetry data.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get(`/mission/${mission.id}/statistics`);
-        setStats(res.data || []);
-      } catch (err) {
-        console.error('Failed to fetch mission statistics:', err);
-        setError('Could not load telemetry data.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStats();
   }, [mission.id]);
 
@@ -83,19 +87,49 @@ const MissionDetails = ({ mission, onBack }) => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        <button 
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+        <button
           className={`btn ${metric === 'survivorProbability' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setMetric('survivorProbability')}
         >
           <Users size={16} /> Survivor Probability
         </button>
-        <button 
+        <button
           className={`btn ${metric === 'temperature' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setMetric('temperature')}
           style={{ background: metric === 'temperature' ? 'linear-gradient(135deg, #ef4444, #f97316)' : '', color: metric === 'temperature' ? 'white' : '' }}
         >
           <Thermometer size={16} /> Thermal Signature
+        </button>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto', cursor: 'pointer', color: 'var(--t1)', fontWeight: '500' }}>
+          <input
+            type="checkbox"
+            checked={showPath}
+            onChange={(e) => setShowPath(e.target.checked)}
+            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+          />
+          Show Rescue Path
+        </label>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem', cursor: 'pointer', color: 'var(--t1)', fontWeight: '500' }}>
+          <input
+            type="checkbox"
+            checked={showLegend}
+            onChange={(e) => setShowLegend(e.target.checked)}
+            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+          />
+          Show Legend
+        </label>
+
+        <button
+          className="btn btn-ghost"
+          onClick={fetchStats}
+          disabled={loading}
+          style={{ padding: '8px', marginLeft: '0.5rem' }}
+          title="Refresh Data"
+        >
+          <RefreshCw size={18} className={loading ? 'spin-anim' : ''} />
         </button>
       </div>
 
@@ -107,14 +141,14 @@ const MissionDetails = ({ mission, onBack }) => {
 
       <div className="glass-card" style={{ flex: 1, minHeight: '65vh', padding: '0.5rem', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {loading ? (
-           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1rem', color: 'var(--t2)', flex: 1 }}>
-             <Loader2 size={24} style={{ animation: 'spin 0.8s linear infinite' }} /> Analyzing spatial memory...
-           </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1rem', color: 'var(--t2)', flex: 1 }}>
+            <Loader2 size={24} style={{ animation: 'spin 0.8s linear infinite' }} /> Analyzing spatial memory...
+          </div>
         ) : (
           <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <MapContainer 
-              center={[parseFloat(mission.latitude), parseFloat(mission.longitude)]} 
-              zoom={15} 
+            <MapContainer
+              center={[parseFloat(mission.latitude), parseFloat(mission.longitude)]}
+              zoom={15}
               style={{ flex: 1, width: '100%', borderRadius: '10px', minHeight: '500px' }}
             >
               <TileLayer
@@ -123,56 +157,56 @@ const MissionDetails = ({ mission, onBack }) => {
               />
               {/* Original Mission Origin - Default Blue Pin */}
               <Marker position={[parseFloat(mission.latitude), parseFloat(mission.longitude)]}>
-                <Popup><strong>Mission Origin</strong><br/>Drone Start Location</Popup>
+                <Popup><strong>Mission Origin</strong><br />Drone Start Location</Popup>
               </Marker>
-              
+
               {/* Team Landing Zone - Start Symbol */}
-              {teamLandingZone && (
-                <CircleMarker 
+              {showPath && teamLandingZone && (
+                <CircleMarker
                   center={[parseFloat(teamLandingZone.latitude), parseFloat(teamLandingZone.longitude)]}
                   radius={8}
                   pathOptions={{ color: '#10b981', fillColor: '#34d399', fillOpacity: 1, weight: 3 }}
                 >
-                  <Popup><strong>Team Landing Zone</strong><br/>Safest & Central Start</Popup>
+                  <Popup><strong>Team Landing Zone</strong><br />Safest & Central Start</Popup>
                 </CircleMarker>
               )}
 
               {/* Evacuation Zone - End Symbol */}
-              {evacuationZone && (
-                <CircleMarker 
+              {showPath && evacuationZone && (
+                <CircleMarker
                   center={[parseFloat(evacuationZone.latitude), parseFloat(evacuationZone.longitude)]}
                   radius={8}
                   pathOptions={{ color: '#ef4444', fillColor: '#f87171', fillOpacity: 1, weight: 3 }}
                 >
-                  <Popup><strong>Evacuation Zone</strong><br/>Rescue Extraction Point</Popup>
+                  <Popup><strong>Evacuation Zone</strong><br />Rescue Extraction Point</Popup>
                 </CircleMarker>
               )}
-              
-              <HeatmapLayer 
-                points={heatPoints} 
-                options={{ 
-                  radius: 35, 
-                  blur: 20, 
-                  maxZoom: 14, 
+
+              <HeatmapLayer
+                points={heatPoints}
+                options={{
+                  radius: 35,
+                  blur: 20,
+                  maxZoom: 14,
                   minOpacity: 0.35,
-                  max: 1.0, 
-                  gradient: metric === 'temperature' 
-                    ? {0.25: 'blue', 0.5: 'cyan', 0.75: 'yellow', 1.0: 'red'}
-                    : {0.25: 'purple', 0.5: 'fuchsia', 0.75: 'orange', 1.0: 'lime'}
-                }} 
+                  max: 1.0,
+                  gradient: metric === 'temperature'
+                    ? { 0.25: 'blue', 0.5: 'cyan', 0.75: 'yellow', 1.0: 'red' }
+                    : { 0.25: 'purple', 0.5: 'fuchsia', 0.75: 'orange', 1.0: 'lime' }
+                }}
               />
 
 
               {/* Main Rescue Route */}
-              {rescuePath && rescuePath.length > 1 && (
+              {showPath && rescuePath && rescuePath.length > 1 && (
                 <>
-                  <Polyline 
-                    positions={rescuePath} 
-                    pathOptions={{ color: '#0369a1', weight: 14, opacity: 0.3, lineCap: 'round', lineJoin: 'round' }} 
+                  <Polyline
+                    positions={rescuePath}
+                    pathOptions={{ color: '#0369a1', weight: 14, opacity: 0.3, lineCap: 'round', lineJoin: 'round' }}
                   />
-                  <Polyline 
-                    positions={rescuePath} 
-                    pathOptions={{ color: '#0f172a', weight: 4, opacity: 0.9, dashArray: '8, 8', lineCap: 'round', lineJoin: 'round' }} 
+                  <Polyline
+                    positions={rescuePath}
+                    pathOptions={{ color: '#0f172a', weight: 4, opacity: 0.9, dashArray: '8, 8', lineCap: 'round', lineJoin: 'round' }}
                   />
                 </>
               )}
@@ -185,7 +219,7 @@ const MissionDetails = ({ mission, onBack }) => {
                   [s.latitude + offset, s.longitude + offset]
                 ];
                 return (
-                  <Rectangle 
+                  <Rectangle
                     key={s.id}
                     bounds={bounds}
                     // Semi-transparent so the heatmap underneath remains visible
@@ -196,86 +230,75 @@ const MissionDetails = ({ mission, onBack }) => {
             </MapContainer>
 
             {/* Premium Legend */}
-            <div style={{
-              position: 'absolute',
-              bottom: '24px',
-              right: '24px',
-              background: 'rgba(15, 23, 42, 0.75)',
-              padding: '16px 20px',
-              borderRadius: '16px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-              zIndex: 1000,
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              minWidth: '240px',
-              color: 'white',
-              fontFamily: 'Inter, sans-serif'
-            }}>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#cbd5e1' }}>
-                {metric === 'temperature' ? 'Thermal Intensity' : 'Survivor Probability'}
-              </h4>
-              
-              {/* Gradient Scale */}
+            {showLegend && (
               <div style={{
-                height: '8px',
-                width: '100%',
-                borderRadius: '4px',
-                background: metric === 'temperature' 
-                  ? 'linear-gradient(to right, blue, cyan, yellow, red)'
-                  : 'linear-gradient(to right, purple, fuchsia, orange, lime)',
-                marginBottom: '8px',
-                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.2)'
-              }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600', marginBottom: '16px' }}>
-                <span>Low</span>
-                <span>High</span>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
-                {/* Obstacle / Rubble Indicator */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '14px',
-                    height: '14px',
-                    backgroundColor: 'rgba(51, 65, 85, 0.6)',
-                    border: '1px solid #1e293b',
-                    borderRadius: '3px'
-                  }} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: '500', color: '#f1f5f9' }}>
-                    Obstacle / Debris
-                  </span>
-                </div>
-                
-                {/* Rescue Route Indicator */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '14px',
-                    height: '4px',
-                    backgroundColor: '#0f172a',
-                    borderRadius: '2px',
-                    boxShadow: '0 0 8px #0369a1'
-                  }} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: '500', color: '#f1f5f9' }}>
-                    Fast Rescue Route
-                  </span>
+                position: 'absolute',
+                bottom: '24px',
+                right: '24px',
+                background: 'rgba(15, 23, 42, 0.75)',
+                padding: '16px 20px',
+                borderRadius: '16px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                zIndex: 1000,
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                minWidth: '240px',
+                color: 'white',
+                fontFamily: 'Inter, sans-serif'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#cbd5e1' }}>
+                  {metric === 'temperature' ? 'Thermal Intensity' : 'Survivor Probability'}
+                </h4>
+
+                {/* Gradient Scale */}
+                <div style={{
+                  height: '8px',
+                  width: '100%',
+                  borderRadius: '4px',
+                  background: metric === 'temperature'
+                    ? 'linear-gradient(to right, blue, cyan, yellow, red)'
+                    : 'linear-gradient(to right, purple, fuchsia, orange, lime)',
+                  marginBottom: '8px',
+                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.2)'
+                }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600', marginBottom: '16px' }}>
+                  <span>Low</span>
+                  <span>High</span>
                 </div>
 
-                {/* Evacuation Zone Indicator */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '14px',
-                    height: '14px',
-                    backgroundColor: '#f87171',
-                    border: '2px solid #ef4444',
-                    borderRadius: '50%'
-                  }} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: '500', color: '#f1f5f9' }}>
-                    Evacuation Zone
-                  </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
+                  {/* Obstacle / Rubble Indicator */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '14px',
+                      height: '14px',
+                      backgroundColor: 'rgba(51, 65, 85, 0.6)',
+                      border: '1px solid #1e293b',
+                      borderRadius: '3px'
+                    }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: '500', color: '#f1f5f9' }}>
+                      Obstacle / Debris
+                    </span>
+                  </div>
+
+                  {/* Rescue Route Indicator */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '14px',
+                      height: '4px',
+                      backgroundColor: '#0f172a',
+                      borderRadius: '2px',
+                      boxShadow: '0 0 8px #0369a1'
+                    }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: '500', color: '#f1f5f9' }}>
+                      Fast Rescue Route
+                    </span>
+                  </div>
+
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

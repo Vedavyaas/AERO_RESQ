@@ -111,8 +111,9 @@ public class JWTConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.cors(AbstractHttpConfigurer::disable);
         httpSecurity.authorizeHttpRequests(http -> http
-                .requestMatchers("/api/user/login/**", "/api/user/authenticate/**").permitAll()
+                .requestMatchers("/api/user/login/**", "/api/user/authenticate/**", "/api/hardware/telemetry/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
         );

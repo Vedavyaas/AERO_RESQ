@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/hardware")
 public class HardwareController {
 
@@ -20,6 +21,7 @@ public class HardwareController {
         for (Statistics statistics : statisticsList) {
             droneCoordinatorService.setStats(statistics);
         }
+        System.out.println("Fuck me.......");
         return ResponseEntity.ok("success");
     }
 
