@@ -13,7 +13,7 @@ function App() {
         <Route 
           path="/admin" 
           element={
-            localStorage.getItem('jwt_token') ? (
+            localStorage.getItem('token') ? (
               <AdminPortal />
             ) : (
               <Navigate to="/" replace />
@@ -24,7 +24,7 @@ function App() {
         <Route 
           path="/user" 
           element={
-            localStorage.getItem('jwt_token') ? (
+            localStorage.getItem('token') ? (
               <UserPortal />
             ) : (
               <Navigate to="/" replace />
