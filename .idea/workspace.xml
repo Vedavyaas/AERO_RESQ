@@ -21,6 +21,25 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="2.1799667840310972E-107" />
+      <entry key="S2" value="2.160789541219003E-27" />
+      <entry key="S5" value="2.156974384680023E-11" />
+      <entry key="S10" value="4.644323830957552E-6" />
+      <entry key="S30" value="0.016684281085636625" />
+      <entry key="S60" value="0.12916764720949525" />
+      <entry key="M2" value="0.3593990083590872" />
+      <entry key="M5" value="0.664095833772203" />
+      <entry key="M10" value="0.8153098068865481" />
+      <entry key="M15" value="0.8913099017319644" />
+      <entry key="M30" value="2.1510072729001504" />
+      <entry key="H1" value="12.328459188767056" />
+      <entry key="H2" value="37.72238001901682" />
+      <entry key="H4" value="68.27930456978025" />
+      <entry key="D1" value="113.62068895048199" />
+      <entry key="W1" value="124.14824550069739" />
+    </decayedCancelled>
+    <decayedSelected>
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
       <entry key="S2" value="1.0" />
@@ -29,53 +48,34 @@
       <entry key="S30" value="1.0" />
       <entry key="S60" value="1.0" />
       <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.000000013567471" />
-      <entry key="M10" value="1.0004774198635609" />
-      <entry key="M15" value="1.0216100296176205" />
-      <entry key="M30" value="2.302873526242232" />
-      <entry key="H1" value="12.756246591997707" />
-      <entry key="H2" value="38.37126685444255" />
-      <entry key="H4" value="68.86405864895923" />
-      <entry key="D1" value="113.7822906499434" />
-      <entry key="W1" value="124.17345513108451" />
-    </decayedCancelled>
-    <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="4.6061661642024004E-254" />
-      <entry key="S30" value="3.9440158771527613E-85" />
-      <entry key="S60" value="8.773578114396723E-43" />
-      <entry key="M2" value="1.8215473841631962E-21" />
-      <entry key="M5" value="2.171764213110615E-8" />
-      <entry key="M10" value="9.399296281746702E-4" />
-      <entry key="M15" value="0.04421341000349104" />
-      <entry key="M30" value="2.6098668655806336" />
-      <entry key="H1" value="22.708453059311548" />
-      <entry key="H2" value="70.66626091705535" />
-      <entry key="H4" value="127.05051504633622" />
-      <entry key="D1" value="209.5995455305246" />
-      <entry key="W1" value="228.6520920931207" />
+      <entry key="M5" value="1.0000000144225956" />
+      <entry key="M10" value="1.000765968155222" />
+      <entry key="M15" value="1.0385742592407756" />
+      <entry key="M30" value="3.4377555020685753" />
+      <entry key="H1" value="22.94691320543932" />
+      <entry key="H2" value="70.47124156594084" />
+      <entry key="H4" value="126.97167496062691" />
+      <entry key="D1" value="210.30185735277223" />
+      <entry key="W1" value="229.60567126410515" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9460576467255959" />
-      <entry key="MS500" value="0.9889709163809315" />
-      <entry key="S2" value="0.9972312513520695" />
-      <entry key="S5" value="0.9988915792636801" />
-      <entry key="S10" value="0.9994456359721023" />
-      <entry key="S30" value="0.999815177833572" />
-      <entry key="S60" value="0.9999075846464872" />
-      <entry key="M2" value="0.9999537912556196" />
-      <entry key="M5" value="0.999981551462794" />
-      <entry key="M10" value="1.001406687570019" />
-      <entry key="M15" value="1.0657733371422324" />
-      <entry key="M30" value="4.911425776908081" />
-      <entry key="H1" value="35.45886932335382" />
-      <entry key="H2" value="109.02832152215485" />
-      <entry key="H4" value="195.90623157339027" />
-      <entry key="D1" value="323.37952733017346" />
-      <entry key="W1" value="352.8251870111041" />
+      <entry key="MS100" value="2.484812751853308E-12" />
+      <entry key="MS500" value="0.004775938584734642" />
+      <entry key="S2" value="0.2628843202485017" />
+      <entry key="S5" value="0.5860111418588028" />
+      <entry key="S10" value="0.7655182875042797" />
+      <entry key="S30" value="0.9314632713358498" />
+      <entry key="S60" value="1.085598115027505" />
+      <entry key="M2" value="1.3373611353582335" />
+      <entry key="M5" value="1.65521618118859" />
+      <entry key="M10" value="1.8116235177809366" />
+      <entry key="M15" value="1.9268758713998022" />
+      <entry key="M30" value="5.586051465293593" />
+      <entry key="H1" value="35.26899561963912" />
+      <entry key="H2" value="108.1841999664845" />
+      <entry key="H4" value="195.24252270095434" />
+      <entry key="D1" value="323.9202098057518" />
+      <entry key="W1" value="353.7535522067158" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -86,28 +86,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Spring Boot.AeroCloudBackendApplication.executor": "Run",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "last_opened_file_path": "/Users/vedavyaasmr/IdeaProjects/aero_resq",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AeroCloudBackendApplication.executor&quot;: &quot;Run&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/vedavyaasmr/IdeaProjects/aero_resq&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -162,7 +162,9 @@
       <workItem from="1790150881270" duration="10429000" />
       <workItem from="1790182847919" duration="16940000" />
       <workItem from="1790254959260" duration="34000" />
-      <workItem from="1790255671583" duration="6442000" />
+      <workItem from="1790255671583" duration="8186000" />
+      <workItem from="1790305067726" duration="353000" />
+      <workItem from="1790307545044" duration="599000" />
     </task>
     <servers />
   </component>

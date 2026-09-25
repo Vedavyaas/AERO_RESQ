@@ -5,10 +5,10 @@ This document details the precise physical dimensions of the bare drone frame st
 ## Overall Structural Dimensions
 | Component | Dimension (X / Length) | Dimension (Y / Width) | Dimension (Z / Thickness) | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Center Base Plate** | `175.0 mm` | `80.0 mm` | `8.0 mm` | The main "bus" body. |
+| **Center Base Plate** | `175.0 mm` | `80.0 mm` | `15.0 mm` | The main "bus" body. |
 | **Motor-to-Motor Diagonal** | `400.0 mm` | `400.0 mm` | N/A | Total diagonal distance between opposite motors (radius is 200mm). |
-| **Arms (4x)** | `200.0 mm` | `18.0 mm` | `8.0 mm` | Distance measured from dead center `(0,0)` to the motor shaft. |
-| **Motor Mounting Pads** | `36.0 mm` (Diameter)| `36.0 mm` (Diameter)| `8.0 mm` | Circular pads at the end of each arm. |
+| **Arms (4x)** | `200.0 mm` | `18.0 mm` | `15.0 mm` | Distance measured from dead center `(0,0)` to the motor shaft. |
+| **Motor Mounting Pads** | `36.0 mm` (Diameter)| `36.0 mm` (Diameter)| `15.0 mm` | Circular pads at the end of each arm. |
 
 ## Mounting Hardware & Hole Patterns
 
@@ -28,7 +28,7 @@ This document details the precise physical dimensions of the bare drone frame st
 *   **Center Shaft Clearance Hole**: `8.0 mm` diameter.
 
 ### Side Sensor Brackets (4x)
-*   **Locations**: Front/Back at `X = ±87.5 mm`, Left/Right at `Y = ±40.0 mm`.
+*   **Locations**: Front/Back at `X = ±87.5 mm`, Left/Right at `X = -30.0 mm, Y = ±40.0 mm`.
 *   **Bracket Dimensions**: `5 mm` (Thickness) x `45 mm` (Width) x `20 mm` (Drop).
 *   **Sensor Tilt Angle**: `20 Degrees` downwards (Pitch).
 
