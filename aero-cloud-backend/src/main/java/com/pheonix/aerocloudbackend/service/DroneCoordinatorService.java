@@ -6,6 +6,7 @@ import com.pheonix.aerocloudbackend.assets.MissionStatus;
 import com.pheonix.aerocloudbackend.assets.Statistics;
 import com.pheonix.aerocloudbackend.repository.*;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +19,9 @@ import java.util.Optional;
 
 @Service
 public class DroneCoordinatorService {
-    private static final String uri = "http://10.253.241.239:5000/initiate";
+    @Value("${ip}")
+    private static String ip;
+    private static final String uri = "http://"+ ip +":5000/initiate";
     private final MissionRepository missionRepository;
     private final DroneRepository droneRepository;
     private final StatisticRepository statisticRepository;
